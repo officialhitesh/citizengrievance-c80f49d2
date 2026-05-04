@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      complaints: {
+        Row: {
+          complaint_id: string
+          created_at: string
+          description: string
+          image_url: string | null
+          latitude: number | null
+          longitude: number | null
+          status: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          complaint_id?: string
+          created_at?: string
+          description: string
+          image_url?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          status?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          complaint_id?: string
+          created_at?: string
+          description?: string
+          image_url?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          status?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
