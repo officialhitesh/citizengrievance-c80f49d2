@@ -16,34 +16,43 @@ export type Database = {
     Tables: {
       complaints: {
         Row: {
+          address: string | null
+          city: string | null
           complaint_id: string
           created_at: string
           description: string
           image_url: string | null
           latitude: number | null
           longitude: number | null
+          state: string | null
           status: string
           title: string
           user_id: string
         }
         Insert: {
+          address?: string | null
+          city?: string | null
           complaint_id?: string
           created_at?: string
           description: string
           image_url?: string | null
           latitude?: number | null
           longitude?: number | null
+          state?: string | null
           status?: string
           title: string
           user_id: string
         }
         Update: {
+          address?: string | null
+          city?: string | null
           complaint_id?: string
           created_at?: string
           description?: string
           image_url?: string | null
           latitude?: number | null
           longitude?: number | null
+          state?: string | null
           status?: string
           title?: string
           user_id?: string
