@@ -10,6 +10,7 @@ import CitizenDashboard from "./pages/CitizenDashboard.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
 import AddComplaint from "./pages/citizen/AddComplaint.tsx";
 import MyComplaints from "./pages/citizen/MyComplaints.tsx";
+import EditComplaint from "./pages/citizen/EditComplaint.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,10 @@ const App = () => (
             <Route
               path="/citizen/my-complaints"
               element={<ProtectedRoute requiredRole="citizen"><MyComplaints /></ProtectedRoute>}
+            />
+            <Route
+              path="/citizen/edit-complaint/:id"
+              element={<ProtectedRoute requiredRole="citizen"><EditComplaint /></ProtectedRoute>}
             />
             <Route
               path="/admin-dashboard"
