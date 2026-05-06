@@ -43,9 +43,17 @@ Deno.serve(async (req) => {
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error(`Resend ${res.status}: ${JSON.stringify(data)}`);
+    if (!res.ok) {
+      // Resend sandbox mode (no verified domain) only allows sending to the
+      // account owner's email. Don't fail signup — log and return success.
+      console.warn(`send-welcome-email skipped (${res.status}):`, JSON.stringify(data));
+      return new Response(
+        JSON.stringify({ success: true, skipped: true, reason: data?.message ?? `status_${res.status}` }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, id: data?.id }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
