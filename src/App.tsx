@@ -11,6 +11,7 @@ import AdminDashboard from "./pages/AdminDashboard.tsx";
 import AddComplaint from "./pages/citizen/AddComplaint.tsx";
 import MyComplaints from "./pages/citizen/MyComplaints.tsx";
 import EditComplaint from "./pages/citizen/EditComplaint.tsx";
+import ResetPassword from "./pages/ResetPassword.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route
               path="/citizen-dashboard"
               element={<ProtectedRoute requiredRole="citizen"><CitizenDashboard /></ProtectedRoute>}
