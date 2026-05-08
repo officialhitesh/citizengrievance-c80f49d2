@@ -49,7 +49,7 @@ const AddComplaint = () => {
         imageUrl = supabase.storage.from("complaint-images").getPublicUrl(path).data.publicUrl;
       }
 
-      const { error } = await supabase.from("complaints").insert({
+      const { data: inserted, error } = await supabase.from("complaints").insert({
         user_id: user.id,
         title: values.title.trim(),
         description: values.description.trim(),
@@ -60,8 +60,15 @@ const AddComplaint = () => {
         latitude: values.coords?.lat ?? null,
         longitude: values.coords?.lng ?? null,
         status: "Pending",
-      });
+      }).select("complaint_id").maybeSingle();
       if (error) { toast.error(error.message); return; }
+
+      // Fire-and-forget AI classification
+      if (inserted?.complaint_id) {
+        supabase.functions.invoke("classify-complaint", {
+          body: { complaintId: inserted.complaint_id },
+        }).catch((err) => console.warn("classify-complaint failed:", err));
+      }
 
       toast.success("Complaint filed successfully");
       navigate("/citizen/my-complaints");
