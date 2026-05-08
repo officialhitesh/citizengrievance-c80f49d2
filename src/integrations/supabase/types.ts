@@ -18,8 +18,10 @@ export type Database = {
         Row: {
           address: string | null
           city: string | null
+          classified_at: string | null
           complaint_id: string
           created_at: string
+          department: string | null
           description: string
           image_url: string | null
           latitude: number | null
@@ -27,13 +29,16 @@ export type Database = {
           state: string | null
           status: string
           title: string
+          urgency: string | null
           user_id: string
         }
         Insert: {
           address?: string | null
           city?: string | null
+          classified_at?: string | null
           complaint_id?: string
           created_at?: string
+          department?: string | null
           description: string
           image_url?: string | null
           latitude?: number | null
@@ -41,13 +46,16 @@ export type Database = {
           state?: string | null
           status?: string
           title: string
+          urgency?: string | null
           user_id: string
         }
         Update: {
           address?: string | null
           city?: string | null
+          classified_at?: string | null
           complaint_id?: string
           created_at?: string
+          department?: string | null
           description?: string
           image_url?: string | null
           latitude?: number | null
@@ -55,6 +63,7 @@ export type Database = {
           state?: string | null
           status?: string
           title?: string
+          urgency?: string | null
           user_id?: string
         }
         Relationships: []

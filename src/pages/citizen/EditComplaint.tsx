@@ -96,6 +96,11 @@ const EditComplaint = () => {
       }).eq("complaint_id", id);
 
       if (error) { toast.error(error.message); return; }
+
+      // Re-classify after edit (fire-and-forget)
+      supabase.functions.invoke("classify-complaint", { body: { complaintId: id } })
+        .catch((err) => console.warn("classify-complaint failed:", err));
+
       toast.success("Complaint updated");
       navigate("/citizen/my-complaints");
     } finally {
