@@ -3,7 +3,7 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { LayoutDashboard, FilePlus2, ListChecks, LogOut, Users, Menu } from "lucide-react";
+import { LayoutDashboard, FilePlus2, ListChecks, LogOut, Users, Menu, Search } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +11,7 @@ const NAV = [
   { to: "/citizen-dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/citizen/add-complaint", label: "Add Complaint", icon: FilePlus2 },
   { to: "/citizen/my-complaints", label: "My Complaints", icon: ListChecks },
+  { to: "/citizen/track", label: "Track Complaint", icon: Search },
 ];
 
 const SidebarContent = ({ onNavigate }: { onNavigate?: () => void }) => (
