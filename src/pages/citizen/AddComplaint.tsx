@@ -1,25 +1,31 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Loader2, Send } from "lucide-react";
+import { Loader2, Send, Copy, CheckCircle2 } from "lucide-react";
 import CitizenLayout from "@/components/CitizenLayout";
 import ComplaintForm, { ComplaintFormValues } from "@/components/ComplaintForm";
 
 const initial: ComplaintFormValues = {
   title: "",
   description: "",
-  state: "",
-  city: "",
+  priority: "",
+  fullName: "",
+  mobile: "",
+  email: "",
   address: "",
+  pincode: "",
+  location: "",
   imageFile: null,
   imagePreview: "",
   existingImageUrl: null,
   removeExistingImage: false,
-  coords: null,
 };
 
 const AddComplaint = () => {
@@ -27,14 +33,35 @@ const AddComplaint = () => {
   const navigate = useNavigate();
   const [values, setValues] = useState<ComplaintFormValues>(initial);
   const [submitting, setSubmitting] = useState(false);
+  const [trackingId, setTrackingId] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  // Prefill name + email from profile
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("name,email").eq("id", user.id).maybeSingle()
+      .then(({ data }) => {
+        if (data) setValues((v) => ({
+          ...v,
+          fullName: v.fullName || data.name || "",
+          email: v.email || data.email || user.email || "",
+        }));
+      });
+  }, [user]);
 
   const update = (patch: Partial<ComplaintFormValues>) => setValues((v) => ({ ...v, ...patch }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    if (!values.title.trim() || !values.description.trim()) return toast.error("Title and description required");
-    if (!values.state || !values.city) return toast.error("Please select state and city");
+    if (!values.title.trim() || !values.description.trim()) return toast.error("Title and description are required");
+    if (!values.priority) return toast.error("Please select a priority");
+    if (!values.fullName.trim()) return toast.error("Full name is required");
+    if (!/^\d{10}$/.test(values.mobile)) return toast.error("Enter a valid 10-digit mobile number");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) return toast.error("Enter a valid email");
+    if (!values.address.trim()) return toast.error("Address is required");
+    if (!/^\d{6}$/.test(values.pincode)) return toast.error("Enter a valid 6-digit pin code");
+    if (!values.location.trim()) return toast.error("Complaint location is required");
 
     setSubmitting(true);
     try {
@@ -45,7 +72,7 @@ const AddComplaint = () => {
         const { error: upErr } = await supabase.storage
           .from("complaint-images")
           .upload(path, values.imageFile, { contentType: values.imageFile.type });
-        if (upErr) { toast.error("Image upload failed: " + upErr.message); return; }
+        if (upErr) { toast.error("Upload failed: " + upErr.message); return; }
         imageUrl = supabase.storage.from("complaint-images").getPublicUrl(path).data.publicUrl;
       }
 
@@ -53,28 +80,36 @@ const AddComplaint = () => {
         user_id: user.id,
         title: values.title.trim(),
         description: values.description.trim(),
-        state: values.state,
-        city: values.city,
-        address: values.address.trim() || null,
+        priority: values.priority,
+        full_name: values.fullName.trim(),
+        mobile: values.mobile,
+        email: values.email.trim(),
+        address: values.address.trim(),
+        pincode: values.pincode,
+        location_text: values.location.trim(),
         image_url: imageUrl,
-        latitude: values.coords?.lat ?? null,
-        longitude: values.coords?.lng ?? null,
         status: "Pending",
-      }).select("complaint_id").maybeSingle();
+      }).select("complaint_id, tracking_id").maybeSingle();
       if (error) { toast.error(error.message); return; }
 
-      // Fire-and-forget AI classification
       if (inserted?.complaint_id) {
         supabase.functions.invoke("classify-complaint", {
           body: { complaintId: inserted.complaint_id },
         }).catch((err) => console.warn("classify-complaint failed:", err));
       }
 
-      toast.success("Complaint filed successfully");
-      navigate("/citizen/my-complaints");
+      setTrackingId(inserted?.tracking_id ?? null);
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const copyTracking = async () => {
+    if (!trackingId) return;
+    await navigator.clipboard.writeText(trackingId);
+    setCopied(true);
+    toast.success("Tracking ID copied");
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -82,7 +117,7 @@ const AddComplaint = () => {
       <div className="container py-8 sm:py-10 max-w-3xl">
         <div className="mb-6">
           <h1 className="text-3xl font-extrabold tracking-tight">File a New Grievance</h1>
-          <p className="text-muted-foreground mt-1">Provide clear details so authorities can act faster.</p>
+          <p className="text-muted-foreground mt-1">Fill in the details below — you'll receive a tracking ID after submission.</p>
         </div>
 
         <Card className="p-6 sm:p-8 shadow-[var(--shadow-card)] border-border/60">
@@ -103,6 +138,34 @@ const AddComplaint = () => {
           </form>
         </Card>
       </div>
+
+      <Dialog open={!!trackingId} onOpenChange={(o) => { if (!o) navigate("/citizen/my-complaints"); }}>
+        <DialogContent>
+          <DialogHeader>
+            <div className="mx-auto w-14 h-14 rounded-full bg-green-500/15 text-green-600 dark:text-green-400 flex items-center justify-center mb-2">
+              <CheckCircle2 className="h-7 w-7" />
+            </div>
+            <DialogTitle className="text-center">Complaint submitted!</DialogTitle>
+            <DialogDescription className="text-center">
+              Save this tracking ID to follow your complaint's progress.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="my-2 p-4 rounded-lg border border-border bg-muted/40 flex items-center justify-between gap-3">
+            <code className="text-xl font-bold tracking-wider">{trackingId}</code>
+            <Button size="sm" variant="outline" onClick={copyTracking}>
+              {copied ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button
+              className="w-full bg-gradient-to-r from-primary to-primary-glow text-primary-foreground"
+              onClick={() => navigate("/citizen/my-complaints")}
+            >
+              View My Complaints
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </CitizenLayout>
   );
 };
