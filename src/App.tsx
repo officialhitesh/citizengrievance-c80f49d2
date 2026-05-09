@@ -11,6 +11,7 @@ import AdminDashboard from "./pages/AdminDashboard.tsx";
 import AddComplaint from "./pages/citizen/AddComplaint.tsx";
 import MyComplaints from "./pages/citizen/MyComplaints.tsx";
 import EditComplaint from "./pages/citizen/EditComplaint.tsx";
+import TrackComplaint from "./pages/citizen/TrackComplaint.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -41,6 +42,10 @@ const App = () => (
             <Route
               path="/citizen/edit-complaint/:id"
               element={<ProtectedRoute requiredRole="citizen"><EditComplaint /></ProtectedRoute>}
+            />
+            <Route
+              path="/citizen/track"
+              element={<ProtectedRoute requiredRole="citizen"><TrackComplaint /></ProtectedRoute>}
             />
             <Route
               path="/admin-dashboard"
