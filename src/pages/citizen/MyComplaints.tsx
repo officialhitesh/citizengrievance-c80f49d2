@@ -18,14 +18,14 @@ import CitizenLayout from "@/components/CitizenLayout";
 type Status = "Pending" | "In Progress" | "Resolved";
 interface Complaint {
   complaint_id: string;
+  tracking_id: string | null;
   title: string;
   description: string;
   image_url: string | null;
-  state: string | null;
-  city: string | null;
   address: string | null;
-  latitude: number | null;
-  longitude: number | null;
+  location_text: string | null;
+  pincode: string | null;
+  priority: string | null;
   status: Status;
   created_at: string;
 }
@@ -153,6 +153,9 @@ const MyComplaints = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-3 flex-wrap">
                         <div className="min-w-0">
+                          {c.tracking_id && (
+                            <div className="text-xs font-mono text-muted-foreground mb-0.5">{c.tracking_id}</div>
+                          )}
                           <h3 className="font-semibold text-lg truncate">{c.title}</h3>
                           <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{c.description}</p>
                         </div>
@@ -163,11 +166,12 @@ const MyComplaints = () => {
                       <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
                         <div className="text-xs text-muted-foreground flex items-center gap-3 flex-wrap">
                           <span>{formatDate(c.created_at)}</span>
-                          {(c.city || c.state) && (
+                          {c.location_text && (
                             <span className="inline-flex items-center gap-1">
-                              <MapPin className="h-3 w-3" /> {[c.city, c.state].filter(Boolean).join(", ")}
+                              <MapPin className="h-3 w-3" /> {c.location_text}
                             </span>
                           )}
+                          {c.priority && <span>Priority: {c.priority}</span>}
                         </div>
                         <div className="flex gap-1.5">
                           <Button

@@ -23,12 +23,19 @@ export type Database = {
           created_at: string
           department: string | null
           description: string
+          email: string | null
+          full_name: string | null
           image_url: string | null
           latitude: number | null
+          location_text: string | null
           longitude: number | null
+          mobile: string | null
+          pincode: string | null
+          priority: string | null
           state: string | null
           status: string
           title: string
+          tracking_id: string | null
           urgency: string | null
           user_id: string
         }
@@ -40,12 +47,19 @@ export type Database = {
           created_at?: string
           department?: string | null
           description: string
+          email?: string | null
+          full_name?: string | null
           image_url?: string | null
           latitude?: number | null
+          location_text?: string | null
           longitude?: number | null
+          mobile?: string | null
+          pincode?: string | null
+          priority?: string | null
           state?: string | null
           status?: string
           title: string
+          tracking_id?: string | null
           urgency?: string | null
           user_id: string
         }
@@ -57,12 +71,19 @@ export type Database = {
           created_at?: string
           department?: string | null
           description?: string
+          email?: string | null
+          full_name?: string | null
           image_url?: string | null
           latitude?: number | null
+          location_text?: string | null
           longitude?: number | null
+          mobile?: string | null
+          pincode?: string | null
+          priority?: string | null
           state?: string | null
           status?: string
           title?: string
+          tracking_id?: string | null
           urgency?: string | null
           user_id?: string
         }
@@ -118,6 +139,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_tracking_id: { Args: never; Returns: string }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]

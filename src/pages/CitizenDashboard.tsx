@@ -6,13 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileText, Clock, CheckCircle2, Plus, ListChecks, ArrowRight, Loader2 } from "lucide-react";
+import { FileText, Clock, CheckCircle2, Plus, ListChecks, ArrowRight, Loader2, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CitizenLayout from "@/components/CitizenLayout";
 
 type Status = "Pending" | "In Progress" | "Resolved";
 interface Row {
   complaint_id: string;
+  tracking_id: string | null;
   title: string;
   status: Status;
   created_at: string;
@@ -37,7 +38,7 @@ const CitizenDashboard = () => {
       .then(({ data }) => setName(data?.name ?? ""));
 
     supabase.from("complaints")
-      .select("complaint_id,title,status,created_at")
+      .select("complaint_id,tracking_id,title,status,created_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .then(({ data }) => {
@@ -72,9 +73,14 @@ const CitizenDashboard = () => {
             </h1>
             <p className="text-muted-foreground mt-2">Here's an overview of your grievance activity.</p>
           </div>
-          <Button onClick={() => navigate("/citizen/add-complaint")} size="lg" className="bg-gradient-to-r from-primary to-primary-glow text-primary-foreground shadow-[var(--shadow-elegant)]">
-            <Plus className="h-4 w-4 mr-2" /> Add New Complaint
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="lg" onClick={() => navigate("/citizen/track")}>
+              <Search className="h-4 w-4 mr-2" /> Track Complaint
+            </Button>
+            <Button onClick={() => navigate("/citizen/add-complaint")} size="lg" className="bg-gradient-to-r from-primary to-primary-glow text-primary-foreground shadow-[var(--shadow-elegant)]">
+              <Plus className="h-4 w-4 mr-2" /> Add New Complaint
+            </Button>
+          </div>
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
@@ -116,6 +122,7 @@ const CitizenDashboard = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Tracking ID</TableHead>
                   <TableHead>Title</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Date</TableHead>
@@ -128,6 +135,7 @@ const CitizenDashboard = () => {
                     className="cursor-pointer"
                     onClick={() => navigate("/citizen/my-complaints")}
                   >
+                    <TableCell className="font-mono text-xs">{r.tracking_id ?? "—"}</TableCell>
                     <TableCell className="font-medium max-w-[280px] truncate">{r.title}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={cn("font-medium", STATUS_STYLES[r.status])}>{r.status}</Badge>

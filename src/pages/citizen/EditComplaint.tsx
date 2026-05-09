@@ -7,11 +7,12 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2, Save, Lock } from "lucide-react";
 import CitizenLayout from "@/components/CitizenLayout";
-import ComplaintForm, { ComplaintFormValues } from "@/components/ComplaintForm";
+import ComplaintForm, { ComplaintFormValues, Priority } from "@/components/ComplaintForm";
 
 const empty: ComplaintFormValues = {
-  title: "", description: "", state: "", city: "", address: "",
-  imageFile: null, imagePreview: "", existingImageUrl: null, removeExistingImage: false, coords: null,
+  title: "", description: "", priority: "", fullName: "", mobile: "", email: "",
+  address: "", pincode: "", location: "",
+  imageFile: null, imagePreview: "", existingImageUrl: null, removeExistingImage: false,
 };
 
 const extractStoragePath = (publicUrl: string | null): string | null => {
@@ -39,19 +40,23 @@ const EditComplaint = () => {
       if (error || !data) { toast.error(error?.message ?? "Not found"); navigate("/citizen/my-complaints"); return; }
       if (data.user_id !== user.id) { toast.error("Access denied"); navigate("/citizen/my-complaints"); return; }
       if (data.status !== "Pending") { setBlocked(data.status); setLoading(false); return; }
+      const d = data as any;
       setValues({
-        title: data.title,
-        description: data.description,
-        state: (data as any).state ?? "",
-        city: (data as any).city ?? "",
-        address: (data as any).address ?? "",
+        title: d.title,
+        description: d.description,
+        priority: (d.priority as Priority) || "",
+        fullName: d.full_name ?? "",
+        mobile: d.mobile ?? "",
+        email: d.email ?? "",
+        address: d.address ?? "",
+        pincode: d.pincode ?? "",
+        location: d.location_text ?? d.city ?? "",
         imageFile: null,
         imagePreview: "",
-        existingImageUrl: data.image_url,
+        existingImageUrl: d.image_url,
         removeExistingImage: false,
-        coords: data.latitude && data.longitude ? { lat: data.latitude, lng: data.longitude } : null,
       });
-      setOriginalImageUrl(data.image_url);
+      setOriginalImageUrl(d.image_url);
       setLoading(false);
     })();
   }, [id, user, navigate]);
@@ -61,8 +66,14 @@ const EditComplaint = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !id) return;
-    if (!values.title.trim() || !values.description.trim()) return toast.error("Title and description required");
-    if (!values.state || !values.city) return toast.error("Please select state and city");
+    if (!values.title.trim() || !values.description.trim()) return toast.error("Title and description are required");
+    if (!values.priority) return toast.error("Please select a priority");
+    if (!values.fullName.trim()) return toast.error("Full name is required");
+    if (!/^\d{10}$/.test(values.mobile)) return toast.error("Enter a valid 10-digit mobile number");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) return toast.error("Enter a valid email");
+    if (!values.address.trim()) return toast.error("Address is required");
+    if (!/^\d{6}$/.test(values.pincode)) return toast.error("Enter a valid 6-digit pin code");
+    if (!values.location.trim()) return toast.error("Complaint location is required");
 
     setSaving(true);
     try {
@@ -74,11 +85,10 @@ const EditComplaint = () => {
         const { error: upErr } = await supabase.storage
           .from("complaint-images")
           .upload(path, values.imageFile, { contentType: values.imageFile.type });
-        if (upErr) { toast.error("Image upload failed: " + upErr.message); return; }
+        if (upErr) { toast.error("Upload failed: " + upErr.message); return; }
         imageUrl = supabase.storage.from("complaint-images").getPublicUrl(path).data.publicUrl;
       }
 
-      // Delete old image if replaced or removed
       if (originalImageUrl && originalImageUrl !== imageUrl) {
         const oldPath = extractStoragePath(originalImageUrl);
         if (oldPath) await supabase.storage.from("complaint-images").remove([oldPath]);
@@ -87,17 +97,18 @@ const EditComplaint = () => {
       const { error } = await supabase.from("complaints").update({
         title: values.title.trim(),
         description: values.description.trim(),
-        state: values.state,
-        city: values.city,
-        address: values.address.trim() || null,
+        priority: values.priority,
+        full_name: values.fullName.trim(),
+        mobile: values.mobile,
+        email: values.email.trim(),
+        address: values.address.trim(),
+        pincode: values.pincode,
+        location_text: values.location.trim(),
         image_url: imageUrl,
-        latitude: values.coords?.lat ?? null,
-        longitude: values.coords?.lng ?? null,
       }).eq("complaint_id", id);
 
       if (error) { toast.error(error.message); return; }
 
-      // Re-classify after edit (fire-and-forget)
       supabase.functions.invoke("classify-complaint", { body: { complaintId: id } })
         .catch((err) => console.warn("classify-complaint failed:", err));
 
